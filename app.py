@@ -21,7 +21,7 @@ import google_auth_httplib2
 
 # --- アプリケーションの初期設定 ---
 app = Flask(__name__)
-app.config["SECRET_KEY"] = os.urandom(24)
+app.config["SECRET_KEY"] = "020795cb4e123a6f7464797ceefb5f27322b5e9bd6c6a5e7"
 socketio = SocketIO(app, cors_allowed_origins="*")
 
 
