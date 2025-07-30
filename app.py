@@ -2,11 +2,12 @@
 
 from flask import Flask, render_template, request, redirect, url_for, session
 from flask_socketio import SocketIO, emit
+from flask_cors import CORS  # ★★★ CORSライブラリをインポート ★★★
 import google.generativeai as genai
 from google.oauth2.credentials import Credentials
 from google_auth_oauthlib.flow import Flow
 from googleapiclient.discovery import build
-import threading  # background_taskのためにthreadingを再度使用
+import threading
 import time
 import re
 from datetime import datetime
@@ -16,6 +17,7 @@ import google_auth_httplib2
 
 # --- アプリケーションの初期設定 ---
 app = Flask(__name__)
+CORS(app)  # ★★★ CORSをアプリに適用 ★★★
 app.config["SECRET_KEY"] = (
     "d22d152509121b6b3e3434682051b9d4b6b23a7780f588a8"  # 固定のキーを使用
 )
@@ -558,7 +560,7 @@ def index_page():
 @app.route("/auth")
 def auth():
     flow = Flow.from_client_secrets_file(
-        bot.CLIENT_SECRRETS_FILE,
+        self.CLIENT_SECRETS_FILE,
         scopes=bot.SCOPES,
         redirect_uri=url_for("oauth_callback", _external=True),
     )
@@ -573,7 +575,7 @@ def auth():
 def oauth_callback():
     state = session["state"]
     flow = Flow.from_client_secrets_file(
-        bot.CLIENT_SECRRETS_FILE,
+        self.CLIENT_SECRETS_FILE,
         scopes=bot.SCOPES,
         state=state,
         redirect_uri=url_for("oauth_callback", _external=True),
@@ -610,7 +612,6 @@ def handle_start_monitoring(data):
     bot.live_chat_id = bot.get_live_chat_id_from_url(data["url"])
     if bot.live_chat_id:
         bot.is_running = True
-        # シンプルなthreading.Threadに戻す
         bot.monitoring_thread = threading.Thread(target=bot.monitoring_loop)
         bot.monitoring_thread.start()
 
@@ -652,6 +653,8 @@ def handle_change_persona(data):
 
 if __name__ == "__main__":
     # RenderはPORT環境変数でリッスンするポートを指定します
-    port = int(os.environ.get('PORT', 5000))
+    port = int(os.environ.get("PORT", 5000))
     # 本番環境で簡易サーバーを許可するためにオプションを追加
-    socketio.run(app, host='0.0.0.0', port=port, debug=False, allow_unsafe_werkzeug=True)
+    socketio.run(
+        app, host="0.0.0.0", port=port, debug=False, allow_unsafe_werkzeug=True
+    )
