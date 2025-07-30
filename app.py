@@ -13,6 +13,9 @@ import time
 import re
 from datetime import datetime
 import os
+
+os.environ["OAUTHLIB_INSECURE_TRANSPORT"] = "1"
+
 import httplib2
 import google_auth_httplib2
 
