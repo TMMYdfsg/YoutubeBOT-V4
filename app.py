@@ -1,3 +1,7 @@
+import eventlet
+
+eventlet.monkey_patch()
+
 from flask import Flask, render_template, request, redirect, url_for, session
 from flask_socketio import SocketIO, emit
 import google.generativeai as genai
@@ -36,7 +40,7 @@ class YouTubeChatBot:
         self.bot_display_name = "Bot"
         self.is_ai_reply_enabled = False
 
-        # ペルソナとキャラクター (変更なし)
+        # ペルソナとキャラクター
         self.personas = {
             "デフォルト": {
                 "配信者": "あなたは有能で親切な配信者です。頑張り屋な性格で、視聴者のコメントに温かく、時にはユーモアを交えて返答してください。敬語は使わず、フレンドリーな口調で話してください。"
@@ -130,7 +134,8 @@ class YouTubeChatBot:
         self.current_persona = "デフォルト"
         self.current_character = "配信者"
 
-        GEMINI_API_KEY = os.environ.get('GEMINI_API_KEY')
+        # Renderの環境変数からAPIキーを読み込む
+        GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY")
         if GEMINI_API_KEY:
             self.setup_gemini(GEMINI_API_KEY)
         else:
