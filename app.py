@@ -652,6 +652,6 @@ def handle_change_persona(data):
 
 if __name__ == "__main__":
     # RenderはPORT環境変数でリッスンするポートを指定します
-    port = int(os.environ.get("PORT", 5000))
-    # 本番環境ではdebug=Falseに設定し、allow_unsafe_werkzeug=Trueは不要
-    socketio.run(app, host="0.0.0.0", port=port, debug=False)
+    port = int(os.environ.get('PORT', 5000))
+    # 本番環境で簡易サーバーを許可するためにオプションを追加
+    socketio.run(app, host='0.0.0.0', port=port, debug=False, allow_unsafe_werkzeug=True)
