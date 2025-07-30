@@ -2,7 +2,7 @@
 
 from flask import Flask, render_template, request, redirect, url_for, session
 from flask_socketio import SocketIO, emit
-from flask_cors import CORS  # ★★★ CORSライブラリをインポート ★★★
+from flask_cors import CORS  # CORSライブラリをインポート
 import google.generativeai as genai
 from google.oauth2.credentials import Credentials
 from google_auth_oauthlib.flow import Flow
@@ -17,7 +17,7 @@ import google_auth_httplib2
 
 # --- アプリケーションの初期設定 ---
 app = Flask(__name__)
-CORS(app)  # ★★★ CORSをアプリに適用 ★★★
+CORS(app)  # CORSをアプリに適用
 app.config["SECRET_KEY"] = (
     "d22d152509121b6b3e3434682051b9d4b6b23a7780f588a8"  # 固定のキーを使用
 )
@@ -30,7 +30,7 @@ class YouTubeChatBot:
         # APIと認証情報
         self.youtube = None
         self.gemini_model = None
-        self.CLIENT_SECRRETS_FILE = "client_secret.json"  # ファイル名を修正
+        self.CLIENT_SECRETS_FILE = "client_secret.json"  # ★★★ タイプミスを修正 ★★★
         self.SCOPES = ["https://www.googleapis.com/auth/youtube.force-ssl"]
         self.TOKEN_FILE = "token.json"
 
@@ -560,7 +560,7 @@ def index_page():
 @app.route("/auth")
 def auth():
     flow = Flow.from_client_secrets_file(
-        self.CLIENT_SECRETS_FILE,
+        bot.CLIENT_SECRETS_FILE,  # ★★★ selfをbotに修正 ★★★
         scopes=bot.SCOPES,
         redirect_uri=url_for("oauth_callback", _external=True),
     )
@@ -575,7 +575,7 @@ def auth():
 def oauth_callback():
     state = session["state"]
     flow = Flow.from_client_secrets_file(
-        self.CLIENT_SECRETS_FILE,
+        bot.CLIENT_SECRETS_FILE,  # ★★★ selfをbotに修正 ★★★
         scopes=bot.SCOPES,
         state=state,
         redirect_uri=url_for("oauth_callback", _external=True),
