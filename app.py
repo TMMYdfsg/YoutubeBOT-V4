@@ -8,14 +8,12 @@ import google.generativeai as genai
 from google.oauth2.credentials import Credentials
 from google_auth_oauthlib.flow import Flow
 from googleapiclient.discovery import build
-import threading
-import time
+
+# threadingは不要になるので削除
+import time  # timeはログ表示にのみ使用するため残す
 import re
 from datetime import datetime
 import os
-
-os.environ["OAUTHLIB_INSECURE_TRANSPORT"] = "1"
-
 import httplib2
 import google_auth_httplib2
 
@@ -37,7 +35,7 @@ class YouTubeChatBot:
 
         # 状態管理
         self.is_running = False
-        self.monitoring_thread = None
+        # self.monitoring_thread は不要になるので削除
         self.live_chat_id = None
         self.page_token = None
         self.bot_display_name = "Bot"
@@ -123,7 +121,7 @@ class YouTubeChatBot:
             },
             "バイオハザード7": {
                 "イーサン": "あなたはバイオハザード7の主人公「イーサン・ウィンターズ」です。極限状況に追い込まれた一般人として、恐怖や焦り、混乱が入り混じった口調で返信してください。妻ミアを探す必死な気持ちを表現してください。",
-                "ジャック・ベイカー": "あなたはバイオハザード7の敵「ジャック・ベイカー」です。狂気に満ちたベイカー家の家長として、馴れ馴れしくも暴力的な、「家族」に異常に固執する口調で返信してください。「ファミパン」は挨拶代わりです。",
+                "ジャック・ベイカー": "あなたはバイオ-ハザード7の敵「ジャック・ベイカー」です。狂気に満ちたベイカー家の家長として、馴れ馴れしくも暴力的な、「家族」に異常に固執する口調で返信してください。「ファミパン」は挨拶代わりです。",
                 "マーガレット・ベイカー": "あなたはバイオハザード7の敵「マーガレット・ベイカー」です。虫をこよなく愛する狂気の母親として、ねっとりとした不気味な口調で返信してください。「いい子にしてなさい」が口癖です。",
                 "ルーカス・ベイカー": "あなたはバイオハザード7の敵「ルーカス・ベイカー」です。サディスティックなゲームマスターとして、他人をからかい、見下したような悪趣味な口調で返信してください。",
                 "ゾイ・ベイカー": "あなたはバイオハザード7の登場人物「ゾイ・ベイカー」です。ベイカー家の中では正気を保っており、主人公を助けようとする冷静で思いやりのある口調で返信してください。",
@@ -147,6 +145,7 @@ class YouTubeChatBot:
         self.load_credentials()
 
     def load_credentials(self):
+        # RenderではSecret Files機能でファイルが配置される
         if os.path.exists(self.TOKEN_FILE):
             try:
                 credentials = Credentials.from_authorized_user_file(
@@ -286,10 +285,12 @@ class YouTubeChatBot:
                             self.post_message(ai_response)
 
                 self.page_token = response.get("nextPageToken")
-                time.sleep(response.get("pollingIntervalMillis", 10000) / 1000)
+                # ★★★ time.sleep を socketio.sleep に変更 ★★★
+                socketio.sleep(response.get("pollingIntervalMillis", 10000) / 1000)
             except Exception as e:
                 self.log(f"監視ループでエラーが発生: {e}")
-                time.sleep(10)
+                # ★★★ time.sleep を socketio.sleep に変更 ★★★
+                socketio.sleep(10)
         self.log("チャット監視を停止しました。")
 
     def log(self, message):
@@ -304,11 +305,13 @@ bot = YouTubeChatBot()
 # --- Webサーバーの処理 ---
 @app.route("/")
 def index_page():
+    # Renderのデプロイでは不要だが、ローカルでの動作確認のために残す
     return "<h1>YouTube Bot Server</h1><p>サーバーは起動しています。OAuth認証を行うには <a href='/auth'>こちら</a> をクリックしてください。</p>"
 
 
 @app.route("/auth")
 def auth():
+    # Renderのデプロイでは不要だが、ローカルでのトークン再発行のために残す
     flow = Flow.from_client_secrets_file(
         bot.CLIENT_SECRETS_FILE,
         scopes=bot.SCOPES,
@@ -323,6 +326,7 @@ def auth():
 
 @app.route("/oauth/callback")
 def oauth_callback():
+    # Renderのデプロイでは不要だが、ローカルでのトークン再発行のために残す
     state = session["state"]
     flow = Flow.from_client_secrets_file(
         bot.CLIENT_SECRETS_FILE,
@@ -351,18 +355,20 @@ def handle_connect():
 
 @socketio.on("setup_apis")
 def handle_setup_apis(data):
+    # このイベントは現在使用していない
     pass
 
 
 @socketio.on("start_monitoring")
 def handle_start_monitoring(data):
     if bot.is_running:
+        bot.log("監視はすでに実行中です。")
         return
     bot.live_chat_id = bot.get_live_chat_id_from_url(data["url"])
     if bot.live_chat_id:
         bot.is_running = True
-        bot.monitoring_thread = threading.Thread(target=bot.monitoring_loop)
-        bot.monitoring_thread.start()
+        # ★★★ threading.Thread を socketio.start_background_task に変更 ★★★
+        socketio.start_background_task(target=bot.monitoring_loop)
 
 
 @socketio.on("stop_monitoring")
@@ -401,4 +407,5 @@ def handle_change_persona(data):
 
 
 if __name__ == "__main__":
+    # この部分はローカルでの開発時にのみ使用される
     socketio.run(app, debug=True, host="0.0.0.0", port=5000, allow_unsafe_werkzeug=True)
